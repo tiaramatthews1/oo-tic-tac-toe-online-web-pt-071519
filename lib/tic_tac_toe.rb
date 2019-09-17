@@ -173,3 +173,5 @@ def play(board)
   else
     return nil
   end
+end
+end
