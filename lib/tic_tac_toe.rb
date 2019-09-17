@@ -1,7 +1,7 @@
 class TicTacToe
 attr_accessor :board
 def initialize(board)
-@board = Array
+@board = Array.new
 end
 
 WIN_COMBINATIONS = [
