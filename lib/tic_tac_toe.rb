@@ -1,6 +1,6 @@
 class TicTacToe
 attr_accessor :board
-def initialize(board)
+def initialize(board, turn)
 @board = Array.new(9, "-")
 @turn = turn
 end
