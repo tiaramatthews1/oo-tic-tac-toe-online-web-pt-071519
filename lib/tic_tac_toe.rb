@@ -1,139 +1,157 @@
-class TicTacToe
-def initialize
-  @board = [" ", " ", " ", " ", " "," ", " ", " ", " "]
+class Player
+  attr_reader :type
+
+  def initialize(type)
+    @type = type
+  end
 end
 
-WIN_COMBINATIONS = [
-  [0, 1, 2],
-  [3, 4, 5],
-  [6, 7, 8],
-  [0, 3, 6],
-  [1, 4, 7],
-  [2, 5, 8],
-  [0, 4, 8],
-  [6, 4, 2]
-]
+class GamePiece
+  attr_reader :pos, :type
 
-def display_board
-  puts " #{board[0]} | #{board[1]} | #{board[2]} "
-  puts "-----------"
-  puts " #{board[3]} | #{board[4]} | #{board[5]} "
-  puts "-----------"
-  puts " #{board[6]} | #{board[7]} | #{board[8]} "
+  def initialize(type, pos)
+    @type = type
+    @pos = pos
+  end
 end
 
-def input_to_index(user_input)
-  user_input.to_i - 1
-end
+class GameBoard
+  WIN_SITUATIONS = [[0,1,2], [3,4,5], [6,7,8], # row wins
+                    [0,3,6], [1,4,7], [2,5,8], # column wins
+                    [0,4,8], [2,4,6]]          # diagonal wins
 
-def move(board, index, current_player)
-  board[index] = current_player
-end
+  def initialize
+    @pieces = [0, 0, 0,
+               0, 0, 0,
+               0, 0, 0]
+    @players = []
 
-def position_taken?(board, index)
-  !(board[index].nil? || board[index] == " ")
-end
+    (1..2).each { |i| add_player(i) }
 
-def valid_move?(board, index)
-  index.between?(0,8) && !position_taken?(board, index)
-end
+    @win = 0
+  end
 
-def turn_count(board)
-  turn = 0
-  board.each do |index|
-    if index == "X" || index == "O"
-      turn += 1
+  def add_player(player)
+    if player == 1
+      system('clear') or system('cls')
+      puts "Player 1, which piece do you want? (X/O)" 
+
+      piece_set = false
+      while !piece_set
+        piece = gets.chomp.upcase
+        unless piece == "X" || piece == "O"
+          puts "Please enter X or O!"
+        else
+          piece_set = true
+        end
+      end
+
+      @players[1] = Player.new(piece == "X" ? 1 : 2)
+    elsif player == 2
+      @players[2] = Player.new(@players[1].type == 1 ? 2 : 1)
     end
   end
-  return turn
-end
 
-def current_player(board)
-  #if the turn count is an even number, that means O just went, so the next/current player is X
-  num_turns = turn_count(board)
-  if num_turns % 2 == 0
-    player = "X"
-  else
-    player = "O"
+  def add_piece(p)
+    @pieces[p.pos] = p
   end
-  return player
-end
 
-def turn(board)
-  puts "Please choose a number 1-9:"
-  user_input = gets.chomp
-  index = input_to_index(user_input)
-  if valid_move?(board, index)
-    player_token = current_player(board)
-    move(board, index, player_token)
-    display_board(board)
-  else
-    turn(board)
-  end
-end
+  def player_move(player)
+    puts "Player #{player}, select where to place your #{@players[player].type == 1 ? "X" : "O"} (1..9)"
+    render_board(false)
 
-def won?(board)
-  WIN_COMBINATIONS.each {|win_combo|
-    index_0 = win_combo[0]
-    index_1 = win_combo[1]
-    index_2 = win_combo[2]
+    pos_set = false
+    while !pos_set
+      pos = gets.chomp.to_i
 
-    position_1 = board[index_0]
-    position_2 = board[index_1]
-    position_3 = board[index_2]
-
-    if position_1 == "X" && position_2 == "X" && position_3 == "X"
-      return win_combo
-    elsif position_1 == "O" && position_2 == "O" && position_3 == "O"
-      return win_combo
+      if !(1..9).include?(pos)
+        puts "Please enter a number 1 through 9!"
+      elsif @pieces[pos-1] != 0
+        puts "There's already a piece there! Try another position."
+      else
+        pos -= 1 # go from human to array position
+        pos_set = true
+      end
     end
-  }
-  return false
-end
-
-def full?(board)
-  board.all? {|index| index == "X" || index == "O"}
-end
-
-def draw?(board)
-  if !won?(board) && full?(board)
-    return true
-  else
-    return false
+    
+    add_piece(GamePiece.new(@players[player].type, pos))
   end
-end
 
-def over?(board)
-  if won?(board) || draw?(board)
-    return true
-  else
-    return false
-  end
-end
-
-def winner (board)
-  index = []
-  index = won?(board)
-  if index == false
-    return nil
-  else
-    if board[index[0]] == "X"
-      return "X"
+  def render_board(render_pieces = true)
+    if render_pieces
+      display_board = 
+        @pieces.collect do |p|
+          begin
+            type = p.type
+          rescue
+            " "
+          else
+            case type
+            when 1
+              "X"
+            when 2
+              "O"
+            end
+          end
+        end
     else
-      return "O"
+      display_board = [*(1..9)]
     end
+
+    puts " #{display_board[0]} | #{display_board[1]} | #{display_board[2]} "
+    puts "___________"
+    puts " #{display_board[3]} | #{display_board[4]} | #{display_board[5]} "
+    puts "___________"
+    puts " #{display_board[6]} | #{display_board[7]} | #{display_board[8]} "
+  end 
+
+  def game_won?
+    WIN_SITUATIONS.each do |situation|
+      result = 
+        situation.collect do |pos|
+          begin
+            @pieces[pos].type
+          rescue
+            @pieces[pos]
+          end
+        end
+
+      first_pos = result[0]
+      won = result.all? {|pos| pos != 0 && pos == first_pos}
+      if won 
+        @win = first_pos == @players[1].type ? 1 : 2
+        break
+      end
+    end
+    return @win
+  end
+
+  def game_loop
+    (1..9).each do |i|
+      system('clear') or system('cls')
+      puts "Current board:"
+      render_board
+
+      player_move(i.odd? ? 1 : 2)
+      
+      won = game_won?
+      return won unless won == 0
+    end
+    return 0
   end
 end
 
-def play(board)
-  until over?(board) == true
-    turn(board)
-  end
+game_board = GameBoard.new
 
-  if won?(board)
-    puts "Congratulations #{winner(board)}!"
-  elsif draw?(board)
-    puts "Cats Game!"
-  end
-end
+result = game_board.game_loop
+if result == 0
+  system('clear') or system('cls')
+  puts "Current board:"
+  game_board.render_board
+  puts "Cat's game!"
+else
+  system('clear')
+  puts "Current board:"
+  game_board.render_board
+  puts "Player #{result} wins!"
 end
