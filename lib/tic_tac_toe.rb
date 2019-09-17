@@ -1,5 +1,5 @@
 class TicTacToe
-attr_accessor :board
+attr_accessor :board, :turn
 def initialize(board, turn)
 @board = Array.new(9, "-")
 @turn = turn
