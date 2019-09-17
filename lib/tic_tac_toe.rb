@@ -4,6 +4,7 @@ def initialize(board, turn)
 @board = Array.new(9, "-")
 @turn = turn
 end
+end
 
 WIN_COMBINATIONS = [
   [0,1,2],
