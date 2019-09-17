@@ -174,9 +174,3 @@ def play(board)
     return nil
   end
 end
-
-
-
-
-
-
